@@ -14,6 +14,12 @@ echo "==> Building the website ($(date '+%Y-%m-%d %H:%M'))"
 curl -fsS http://127.0.0.1:${API_PORT}/api/health >/dev/null || { echo "API is not running; skipped."; exit 1; }
 npm run build -w client
 
+echo "==> Making the admin app shell"
+# /admin gets its own copy of the app shell whose HTML already points at the admin
+# manifest and icon, so "Install" / "Add to Home Screen" saves /admin, not the landing page.
+sed -e 's#href="/site.webmanifest"#href="/admin.webmanifest"#'     -e 's#href="/brand/apple-touch-icon.png"#href="/brand/admin-apple-touch.png"#'     -e 's#<title>[^<]*</title>#<title>GTYF Admin</title>#'     -e 's#</head>#<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="GTYF Admin"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></head>#'     client/dist/200.html > client/dist/admin.html
+grep -q 'admin.webmanifest' client/dist/admin.html || { echo "admin shell was not made"; exit 1; }
+
 echo "==> Publishing"
 # 1) New scripts/styles first (old ones are kept so people mid-visit don't break),
 # 2) then the pages that point at them.
