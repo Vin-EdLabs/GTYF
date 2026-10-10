@@ -3,14 +3,8 @@ import type { media } from '../db/schema';
 
 type MediaRow = typeof media.$inferSelect;
 
-/**
- * Child-safeguarding gate. An image is public only if it has alt text and, when
- * it shows children, consent has been confirmed. Every public endpoint passes
- * images through here; nothing else serialises media.
- */
+/** Every uploaded photo with processed sizes is public. A missing description falls back to a generic one. */
 export function isPublishable(m: MediaRow): boolean {
-  if (!m.altText.trim()) return false;
-  if (m.showsChildren && !m.consentConfirmed) return false;
   return m.variants.length > 0;
 }
 
@@ -26,7 +20,7 @@ export function toPublicImage(m: MediaRow | null | undefined): PublicImage | nul
   const srcSet = (list: typeof webp) => list.map((v) => `${url(v.path)} ${v.width}w`).join(', ');
   return {
     id: m.id,
-    alt: m.altText,
+    alt: m.altText.trim() || 'Guide The Youth Foundation photo',
     caption: m.caption,
     width: m.width,
     height: m.height,

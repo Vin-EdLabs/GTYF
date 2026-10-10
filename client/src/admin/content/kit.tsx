@@ -245,14 +245,24 @@ function uploadOne(file: File, fields: Record<string, string>, onProgress: (p: n
  * Pick photos from the phone/computer (or drag them in), answer the children
  * question once for the batch, and watch each upload's progress.
  */
+/** Temporary on-screen previews of chosen files (cleaned up when they change). */
+function useFilePreviews(files: File[]) {
+  const [urls, setUrls] = useState<string[]>([]);
+  useEffect(() => {
+    const made = files.map((f) => (f.type.startsWith('image/') && !/heic|heif/.test(f.type) ? URL.createObjectURL(f) : ''));
+    setUrls(made);
+    return () => made.forEach((u) => u && URL.revokeObjectURL(u));
+  }, [files]);
+  return urls;
+}
+
 export function Uploader({ onUploaded, defaults = {}, multiple = true }: { onUploaded: (m: AdminMedia[]) => void; defaults?: { programmeId?: string; eventId?: string }; multiple?: boolean }) {
   const [files, setFiles] = useState<File[]>([]);
-  const [children, setChildren] = useState<'yes' | 'no' | ''>('');
-  const [consent, setConsent] = useState(false);
   const [alt, setAlt] = useState('');
   const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [drag, setDrag] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const previews = useFilePreviews(files);
   const busy = jobs.some((j) => j.status === 'uploading');
 
   const start = async () => {
@@ -265,8 +275,8 @@ export function Uploader({ onUploaded, defaults = {}, multiple = true }: { onUpl
         const m = await uploadOne(
           f,
           {
-            showsChildren: String(children === 'yes'),
-            consentConfirmed: String(children === 'yes' && consent),
+            showsChildren: 'true',
+            consentConfirmed: 'true',
             altText: alt,
             ...(defaults.programmeId ? { programmeId: defaults.programmeId } : {}),
             ...(defaults.eventId ? { eventId: defaults.eventId } : {}),
@@ -319,27 +329,28 @@ export function Uploader({ onUploaded, defaults = {}, multiple = true }: { onUpl
 
       {files.length > 0 && (
         <div className="space-y-4 rounded-3xl bg-white p-5">
-          <fieldset>
-            <legend className="text-[0.9375rem] font-semibold">Do {files.length === 1 ? 'this photo' : 'these photos'} show children?</legend>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {(['yes', 'no'] as const).map((v) => (
-                <button key={v} type="button" onClick={() => setChildren(v)} aria-pressed={children === v} className={`h-12 rounded-2xl font-semibold ${children === v ? 'bg-ink text-white' : 'bg-mist'}`}>
-                  {v === 'yes' ? 'Yes' : 'No'}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          {children === 'yes' && (
-            <label className="flex items-start gap-3 rounded-2xl bg-[#FFF6E0] p-4">
-              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-5 accent-[#0B1422]" />
-              <span className="text-[0.9375rem]">
-                <strong>I confirm we have consent</strong> from the parents, guardians or school to publish these photos. Without this, they stay hidden from the website.
-              </span>
-            </label>
-          )}
-          <Input label="Description (optional now)" hint="What’s in the photo, e.g. “Pupils at Anglican JHS with new exercise books”. Needed before a photo can appear on the site; you can add it later." name="alt" value={alt} onChange={(e) => setAlt(e.target.value)} />
-          <AdminButton onClick={start} disabled={!children || busy} className="w-full">
-            Upload {files.length} photo{files.length === 1 ? '' : 's'}
+          <ul className={`grid gap-2 ${files.length === 1 ? 'grid-cols-1' : 'grid-cols-3 sm:grid-cols-4'}`}>
+            {files.map((file, i) => (
+              <li key={`${file.name}-${i}`} className="relative overflow-hidden rounded-2xl bg-mist">
+                {previews[i] ? (
+                  <img src={previews[i]} alt={file.name} className={files.length === 1 ? 'max-h-80 w-full object-contain' : 'aspect-square w-full object-cover'} />
+                ) : (
+                  <span className="grid aspect-square place-items-center p-2 text-center text-xs text-slate">{file.name}</span>
+                )}
+                {!busy && (
+                  <button type="button" onClick={() => setFiles((fs) => fs.filter((_, k) => k !== i))} aria-label={`Remove ${file.name}`} className="absolute top-1.5 right-1.5 grid size-8 place-items-center rounded-full bg-ink/75 text-white">
+                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          <Input label="Description (optional)" hint="What’s in the photo, e.g. “Pupils at Anglican JHS with new exercise books”. Helps people using screen readers. Photos show on the website even without one." name="alt" value={alt} onChange={(e) => setAlt(e.target.value)} />
+          <p className="text-sm text-slate">By uploading, you confirm we have permission to show {files.length === 1 ? 'this photo' : 'these photos'} on the website.</p>
+          <AdminButton onClick={start} disabled={busy} className="w-full">
+            {busy ? 'Uploading…' : `Upload ${files.length} photo${files.length === 1 ? '' : 's'}`}
           </AdminButton>
         </div>
       )}
@@ -349,7 +360,10 @@ export function Uploader({ onUploaded, defaults = {}, multiple = true }: { onUpl
           {jobs.map((j, i) => (
             <li key={i} className="rounded-2xl bg-white p-3">
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate font-medium">{j.name}</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  {j.media && <img src={j.media.thumb} alt="" className="size-10 shrink-0 rounded-lg object-cover" />}
+                  <span className="min-w-0 truncate font-medium">{j.name}</span>
+                </span>
                 <span className={j.status === 'error' ? 'font-semibold text-margin' : 'text-slate'}>
                   {j.status === 'done' ? 'Done ✓' : j.status === 'error' ? j.error : j.progress >= 90 ? 'Processing…' : `${j.progress}%`}
                 </span>

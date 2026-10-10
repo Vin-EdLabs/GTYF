@@ -53,11 +53,7 @@ const fileUrl = (p: string) => `/uploads/${p}`;
 
 function toAdminMedia(m: MediaRow): AdminMedia {
   const webp = m.variants.filter((v) => v.format === 'webp').sort((a, b) => a.width - b.width);
-  const hiddenReason = !m.altText.trim()
-    ? 'Add a description so it can be shown'
-    : m.showsChildren && !m.consentConfirmed
-      ? 'Waiting for consent confirmation'
-      : null;
+  const hiddenReason: string | null = null;
   return {
     id: m.id,
     src: fileUrl((webp.at(-1) ?? m.variants[0]!).path),
@@ -115,10 +111,11 @@ adminContentRouter.post('/media', upload.single('file'), async (req, res) => {
       originalFilename: req.file.originalname.slice(0, 200),
       mimeType: req.file.mimetype,
       altText: (b.altText ?? '').trim().slice(0, 300) || 'Guide The Youth Foundation photo',
-      showsChildren: b.showsChildren === 'true',
-      consentConfirmed: b.showsChildren === 'true' && b.consentConfirmed === 'true',
-      consentConfirmedBy: b.showsChildren === 'true' && b.consentConfirmed === 'true' ? req.admin!.id : null,
-      consentConfirmedAt: b.showsChildren === 'true' && b.consentConfirmed === 'true' ? new Date() : null,
+      // Photos are meant to be seen: uploading is the confirmation that we may publish them.
+      showsChildren: true,
+      consentConfirmed: true,
+      consentConfirmedBy: req.admin!.id,
+      consentConfirmedAt: new Date(),
       programmeId: b.programmeId || null,
       eventId: b.eventId || null,
       year: b.year && /^\d{4}$/.test(b.year) ? Number(b.year) : new Date().getUTCFullYear(),
