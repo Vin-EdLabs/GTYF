@@ -1,0 +1,15 @@
+# Keep Linux line endings for everything that runs on the server,
+# even when the project is edited on Windows.
+*.sh text eol=lf
+*.conf text eol=lf
+*.cjs text eol=lf
+deploy/** text eol=lf
+.env* text eol=lf
+
+# Photos and fonts are binary.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.avif binary
+*.woff2 binary

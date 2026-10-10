@@ -1,0 +1,1 @@
+ALTER TABLE "team_members" ADD COLUMN "is_leader" boolean DEFAULT false NOT NULL;

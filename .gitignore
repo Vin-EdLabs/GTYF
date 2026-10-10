@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+uploads/
+*.log
+.DS_Store
+.vite/
+.drizzle-verify/
+.pglite/
+.mail-outbox/
+server/uploads/
+.pglite-backup-*/

@@ -1,0 +1,20 @@
+# Local development database only. Production uses Postgres on the Vultr VPS.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gtyf
+      POSTGRES_PASSWORD: gtyf
+      POSTGRES_DB: gtyf
+    ports:
+      - '5432:5432'
+    volumes:
+      - gtyf-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gtyf']
+      interval: 5s
+      retries: 10
+
+volumes:
+  gtyf-db:

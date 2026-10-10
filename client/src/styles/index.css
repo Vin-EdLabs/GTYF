@@ -1,0 +1,360 @@
+@import 'tailwindcss';
+
+/*
+ * GTYF design tokens. The default Tailwind palette is removed on purpose so
+ * only the brand colours below can be used.
+ */
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-ink: #0b1422; /* headlines, dark sections, footer */
+  --color-paper: #ffffff; /* main background */
+  --color-mist: #f3f5f8; /* alternate section background */
+  --color-lantern: #f2a900; /* the one accent: "a guiding light" */
+  --color-ruling: #3d6fd6; /* detail only: exercise-book lines */
+  --color-margin: #d6453d; /* detail only: exercise-book margin; also errors */
+  --color-slate: #5b6676; /* secondary body text */
+
+  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-hero: clamp(3rem, 1.6rem + 6vw, 6.5rem);
+  --text-hero--line-height: 0.98;
+  --text-display: clamp(2.25rem, 1.5rem + 3.2vw, 4.25rem);
+  --text-display--line-height: 1.02;
+  --text-title: clamp(1.625rem, 1.3rem + 1.4vw, 2.5rem);
+  --text-title--line-height: 1.1;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+  --text-lead: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  --text-lead--line-height: 1.55;
+
+  --tracking-display: -0.02em;
+  --tracking-label: 0.08em;
+
+  --radius-card: 20px;
+  --shadow-soft: 0 1px 2px rgb(11 20 34 / 0.04), 0 12px 32px -12px rgb(11 20 34 / 0.14);
+
+  --ease-guide: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper font-sans text-body text-ink antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-display text-balance;
+    font-weight: 700;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Phones: no grey tap flash, no double-tap zoom delay on controls. */
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: rgb(242 169 0 / 0.35);
+  }
+
+  /* Visible focus on everything, in the accent colour, offset so it never hides content. */
+  :focus-visible {
+    outline: 3px solid var(--color-lantern);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    /* [data-keep-motion] opts out: e.g. slideshow progress bars, which are timers, not movement. */
+    *:not([data-keep-motion]),
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Mono labels: stats, dates, receipt numbers. */
+  .label {
+    @apply font-mono text-xs font-medium uppercase tracking-label;
+  }
+
+  /* Comfortable reading measure. */
+  .prose-measure {
+    max-width: 65ch;
+  }
+
+  /*
+   * Signature detail: a page from a school exercise book. Thin blue ruling
+   * every 2rem and one red margin line. Used behind the donation card, the
+   * impact receipt and pull quotes.
+   */
+  .ruled {
+    --rule-gap: 2rem;
+    --margin-x: 3.25rem;
+    background-color: var(--color-paper);
+    background-image:
+      linear-gradient(to right, transparent calc(var(--margin-x) - 1px), rgb(214 69 61 / 0.55) calc(var(--margin-x) - 1px), rgb(214 69 61 / 0.55) var(--margin-x), transparent var(--margin-x)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule-gap) - 1px), rgb(61 111 214 / 0.16) calc(var(--rule-gap) - 1px), rgb(61 111 214 / 0.16) var(--rule-gap));
+  }
+
+  /* Phones: pull the margin line in so forms get more width. */
+  @media (width < 40rem) {
+    .ruled-tight {
+      --margin-x: 2rem;
+    }
+  }
+
+  /*
+   * Receipt: a real-feeling paper page. Very faint exercise-book lines and
+   * margin (a detail, never behind anything hard to read), and a perforated
+   * bottom edge cut into the page background.
+   */
+  .receipt-paper {
+    background-color: var(--color-white);
+    background-image:
+      linear-gradient(to right, transparent 1.1rem, rgb(214 69 61 / 0.18) 1.1rem, rgb(214 69 61 / 0.18) calc(1.1rem + 1px), transparent calc(1.1rem + 1px)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 2.1rem, rgb(61 111 214 / 0.07) 2.1rem, rgb(61 111 214 / 0.07) calc(2.1rem + 1px));
+  }
+  .receipt-perforation {
+    background: radial-gradient(circle at 10px 16px, var(--color-mist) 7px, var(--color-white) 7.5px) repeat-x;
+    background-size: 20px 16px;
+  }
+
+  /* Sections fade/slide in on enter, but only once JS has confirmed they are off-screen. */
+  [data-reveal='pending'] {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  [data-reveal='shown'] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.8s var(--ease-guide),
+      transform 0.8s var(--ease-guide);
+  }
+
+  /* Placeholder content GTYF still has to supply. Only rendered in development. */
+  .todo-placeholder {
+    @apply rounded-sm px-1 font-mono text-[0.8em];
+    outline: 1.5px dashed var(--color-margin);
+    color: var(--color-margin);
+    background: rgb(214 69 61 / 0.06);
+  }
+}
+
+@layer components {
+  /* Rich text from the news editor. */
+  .prose-gtyf {
+    max-width: 65ch;
+    font-size: var(--text-lead);
+    line-height: 1.7;
+  }
+  .prose-gtyf > * + * {
+    margin-top: 1.25em;
+  }
+  .prose-gtyf h2,
+  .prose-gtyf h3 {
+    margin-top: 2em;
+    line-height: 1.15;
+  }
+  .prose-gtyf h2 {
+    font-size: var(--text-title);
+  }
+  .prose-gtyf h3 {
+    font-size: 1.375rem;
+  }
+  .prose-gtyf a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-lantern);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .prose-gtyf ul,
+  .prose-gtyf ol {
+    padding-left: 1.25em;
+  }
+  .prose-gtyf ul {
+    list-style: disc;
+  }
+  .prose-gtyf ol {
+    list-style: decimal;
+  }
+  .prose-gtyf li::marker {
+    color: var(--color-lantern);
+  }
+  .prose-gtyf blockquote {
+    border-left: 3px solid var(--color-margin);
+    padding-left: 1.25em;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+  }
+  .prose-gtyf img {
+    border-radius: var(--radius-card);
+  }
+}
+
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * Amount slider: a thick track that fills in lantern up to the thumb
+ * (--fill is set inline), and a large thumb that's easy to drag with a thumb.
+ */
+.amount-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.amount-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-lantern) var(--fill, 0%), rgb(11 20 34 / 0.1) var(--fill, 0%));
+}
+.amount-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-lantern) var(--fill, 0%), rgb(11 20 34 / 0.1) var(--fill, 0%));
+}
+.amount-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 2px solid var(--color-ink);
+  box-shadow: 0 4px 14px rgb(11 20 34 / 0.2);
+  transition: transform 0.2s var(--ease-guide);
+}
+.amount-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 2px solid var(--color-ink);
+  box-shadow: 0 4px 14px rgb(11 20 34 / 0.2);
+}
+.amount-slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+.amount-slider:focus-visible {
+  outline: none;
+}
+.amount-slider:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--color-lantern);
+  outline-offset: 3px;
+}
+.amount-slider:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--color-lantern);
+  outline-offset: 3px;
+}
+
+/* Exercise-book writing animation for the thank-you page. */
+@keyframes write-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility container-page {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* Newsletter success tick draws itself. */
+.check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: check-draw 0.6s 0.1s var(--ease-guide, ease-out) forwards;
+}
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .check-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

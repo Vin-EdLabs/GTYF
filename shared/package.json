@@ -1,0 +1,22 @@
+{
+  "name": "@gtyf/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./content": "./src/content/index.ts",
+    "./forms": "./src/forms.ts",
+    "./api": "./src/api.ts",
+    "./donations": "./src/donations.ts",
+    "./donation-schema": "./src/donationSchema.ts",
+    "./admin": "./src/admin.ts",
+    "./admin-content": "./src/adminContent.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  }
+}
