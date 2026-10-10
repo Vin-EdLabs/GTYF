@@ -5,6 +5,7 @@ import type { FieldErrors } from '@gtyf/shared/forms';
 import { ApiError } from '../../lib/api';
 import { adminApi, useAdminAuth } from '../auth';
 import { AdminButton, Card, Notice, PageHeader, PasswordInput } from '../ui';
+import { InstallCard } from '../pwa';
 
 export default function Account() {
   const { admin, signOut } = useAdminAuth();
@@ -36,6 +37,7 @@ export default function Account() {
   return (
     <>
       <PageHeader title="Your account" />
+      <InstallCard dismissible={false} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <dl className="space-y-3">

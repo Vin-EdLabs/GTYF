@@ -3,6 +3,7 @@ import { formatCedis } from '@gtyf/shared';
 import type { DashboardStats } from '@gtyf/shared/admin';
 import { useAdminAuth, useAdminData } from '../auth';
 import { IncomeByCause, IncomeByMonth } from '../charts';
+import { InstallCard } from '../pwa';
 import { Card, Notice, PageHeader, Spinner } from '../ui';
 import { DonationList } from './Donations';
 
@@ -21,6 +22,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <InstallCard />
       <PageHeader title={`Hello, ${firstName}`} subtitle="Here’s how giving is going." />
 
       {/* Total income: the headline */}

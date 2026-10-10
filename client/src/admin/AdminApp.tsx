@@ -4,6 +4,7 @@ import { Head } from 'vite-react-ssg';
 import { ROLE_LABELS } from '@gtyf/shared/admin';
 import { SiteProvider } from '../lib/site';
 import { AdminAuthProvider, adminApi, useAdminAuth } from './auth';
+import { PwaProvider } from './pwa';
 import { Spinner } from './ui';
 
 /**
@@ -18,7 +19,9 @@ export default function AdminApp() {
         <title>Admin · Guide The Youth Foundation</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <Shell />
+      <PwaProvider>
+        <Shell />
+      </PwaProvider>
     </AdminAuthProvider>
     </SiteProvider>
   );

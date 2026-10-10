@@ -18,7 +18,9 @@ import { env } from '../env';
 import { HttpError } from './http';
 
 export const SESSION_COOKIE = 'gtyf_admin';
-const SESSION_HOURS = 12;
+/** Stay signed in for 60 days; every visit after the first day starts a fresh 60 days (sliding), so an admin who uses the app never gets signed out. */
+const SESSION_DAYS = 60;
+const RENEW_AFTER_MS = 24 * 3600 * 1000;
 
 export type AdminRow = typeof admins.$inferSelect;
 
@@ -68,18 +70,25 @@ export async function checkCredentials(email: string, password: string): Promise
 
 export function startSession(res: Response, admin: AdminRow) {
   // Including a slice of the password hash means changing the password signs out other sessions.
-  const token = jwt.sign({ sub: admin.id, pv: admin.passwordHash.slice(-10) }, env.JWT_SECRET, { expiresIn: `${SESSION_HOURS}h` });
+  const token = jwt.sign({ sub: admin.id, pv: admin.passwordHash.slice(-10) }, env.JWT_SECRET, { expiresIn: `${SESSION_DAYS}d` });
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/api',
-    maxAge: SESSION_HOURS * 3600 * 1000,
+    maxAge: SESSION_DAYS * 24 * 3600 * 1000,
   });
 }
 
 export function endSession(res: Response) {
   res.clearCookie(SESSION_COOKIE, { path: '/api', sameSite: 'strict', secure: env.NODE_ENV === 'production', httpOnly: true });
+}
+
+/** Push the sign-in forward when the cookie is more than a day old. */
+function renewSession(req: Request, res: Response, admin: AdminRow) {
+  const token = req.cookies?.[SESSION_COOKIE];
+  const payload = typeof token === 'string' ? (jwt.decode(token) as { iat?: number } | null) : null;
+  if (payload?.iat && Date.now() - payload.iat * 1000 > RENEW_AFTER_MS) startSession(res, admin);
 }
 
 export async function loadAdmin(req: Request): Promise<AdminRow | null> {
@@ -97,12 +106,13 @@ export async function loadAdmin(req: Request): Promise<AdminRow | null> {
 
 /** Require a signed-in admin, optionally with one of the given roles (super admins always pass). */
 export function requireAdmin(...roles: AdminRole[]): RequestHandler {
-  return async (req: Request, _res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const admin = await loadAdmin(req);
     if (!admin) return next(new HttpError(401, 'Please sign in.'));
     if (roles.length && admin.role !== 'super_admin' && !roles.includes(admin.role)) {
       return next(new HttpError(403, 'Your role doesn’t allow this. Ask a super admin.'));
     }
+    renewSession(req, res, admin);
     req.admin = admin;
     next();
   };

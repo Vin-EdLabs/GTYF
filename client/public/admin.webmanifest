@@ -1,0 +1,22 @@
+{
+  "id": "/admin",
+  "name": "GTYF Admin",
+  "short_name": "GTYF Admin",
+  "description": "Manage the Guide The Youth Foundation website, donations and inbox.",
+  "start_url": "/admin?source=pwa",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0B1422",
+  "icons": [
+    { "src": "/brand/admin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/admin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/admin-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Donations", "url": "/admin/donations" },
+    { "name": "Inbox", "url": "/admin/inbox" },
+    { "name": "Website", "url": "/admin/content" }
+  ]
+}
