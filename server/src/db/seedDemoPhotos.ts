@@ -79,9 +79,10 @@ export async function seedDemoPhotos(db: Db, log: (m: string) => void = console.
       } else if (slot.kind === 'event') {
         const eid = eventId(slot.slug);
         if (eid) n = (await db.update(s.events).set({ heroImageId: id }).where(and(eq(s.events.id, eid), isNull(s.events.heroImageId))).returning()).length;
-      } else {
-        const group = slot.kind === 'about' ? 'about' : 'seo';
-        const field = slot.kind === 'about' ? 'photoId' : 'defaultOgImageId';
+      } else if (slot.kind === 'about') {
+        // (The link-preview image is the GTYF logo card by default, never a stock photo.)
+        const group = 'about';
+        const field = 'photoId';
         const current = (await getSiteSettings(db))[group] as Record<string, unknown>;
         if (!current[field]) {
           const value = { ...current, [field]: id };

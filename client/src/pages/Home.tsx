@@ -34,10 +34,9 @@ export default function Home() {
     news: (s) => <LatestNews posts={data.latestNews} section={s} />,
   };
 
-  const image = data.heroSlides[0]?.image;
   return (
     <>
-      <Seo image={image?.ogUrl ?? image?.src} />
+      <Seo />
       {sections
         .filter((s) => s.isVisible && s.key in render)
         .map((s) => (

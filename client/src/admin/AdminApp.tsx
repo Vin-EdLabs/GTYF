@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Head } from 'vite-react-ssg';
 import { ROLE_LABELS } from '@gtyf/shared/admin';
@@ -72,6 +72,11 @@ function Shell() {
   const { admin, loading, signOut } = useAdminAuth();
   const { pathname } = useLocation();
   const inboxCount = useInboxCount(!!admin && admin.role !== 'finance');
+  const scroller = useRef<HTMLDivElement>(null);
+  // A new page starts at the top (the window no longer scrolls, so do it here).
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   if (loading) return <Spinner />;
   if (!admin && pathname !== '/admin/login') return <Navigate to={`/admin/login?next=${encodeURIComponent(pathname)}`} replace />;
@@ -83,9 +88,9 @@ function Shell() {
   const tabClass = ({ isActive }: { isActive: boolean }) => (isActive ? 'text-ink' : 'text-slate hover:text-ink');
 
   return (
-    <div className="min-h-svh bg-mist text-ink lg:grid lg:grid-cols-[16rem_1fr]">
+    <div className="flex h-dvh flex-col overflow-hidden bg-mist text-ink lg:grid lg:grid-cols-[16rem_1fr]">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-svh flex-col border-r border-ink/[0.06] bg-white p-5 lg:flex">
+      <aside className="hidden h-dvh flex-col border-r border-ink/[0.06] bg-white p-5 lg:flex">
         <Brand />
         <nav aria-label="Admin" className="mt-8 flex flex-col gap-1">
           {tabs.map((t) => (
@@ -121,19 +126,24 @@ function Shell() {
       </aside>
 
       {/* Phone top bar */}
-      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-ink/[0.06] bg-white/90 px-4 backdrop-blur-xl lg:hidden">
+      <header className="z-20 shrink-0 border-b border-ink/[0.06] bg-white pt-[env(safe-area-inset-top)] lg:hidden">
+        <div className="flex h-16 items-center justify-between px-4">
         <Brand compact />
         <NavLink to="/admin/account" aria-label="Your account" className="grid size-10 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
           {admin.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
         </NavLink>
+        </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">
-        <Outlet />
-      </main>
+      {/* The page scrolls inside this box, not the whole window, so the top bar and tab bar never move. */}
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-10 sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">
+          <Outlet />
+        </main>
+      </div>
 
       {/* Phone bottom tabs */}
-      <nav aria-label="Admin" className="fixed inset-x-0 bottom-0 z-20 grid border-t border-ink/[0.08] bg-white/95 pb-safe backdrop-blur-xl lg:hidden" style={{ gridTemplateColumns: `repeat(${phoneTabs.length}, 1fr)` }}>
+      <nav aria-label="Admin" className="z-20 grid shrink-0 border-t border-ink/[0.08] bg-white pb-safe lg:hidden" style={{ gridTemplateColumns: `repeat(${phoneTabs.length}, 1fr)` }}>
         {phoneTabs.map((t) => (
           <NavLink key={t.to} to={t.to} end={t.to === '/admin'} className={(s) => `relative flex flex-col items-center gap-0.5 pt-2.5 pb-1 text-xs font-semibold ${tabClass(s)}`}>
             {t.icon}

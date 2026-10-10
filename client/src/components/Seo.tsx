@@ -26,7 +26,7 @@ export function Seo({ title, description, image, type = 'website', noindex }: Pr
   const fullTitle = title ? seo.titleTemplate.replace('%s', title) : seo.defaultTitle;
   const desc = description ?? seo.defaultDescription;
   const url = `${SITE_URL}${pathname}`;
-  const img = absolute(image ?? fallbackImage ?? '/brand/logo-full.png');
+  const img = absolute(image ?? fallbackImage ?? '/brand/og-logo.png');
 
   return (
     <Head>
