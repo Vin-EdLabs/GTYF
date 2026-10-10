@@ -6,10 +6,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SITE_DIR="/var/www/guidetheyouth/site"
+API_PORT="$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '"[:space:]')"; API_PORT="${API_PORT:-4000}"
+export CONTENT_API_URL="http://127.0.0.1:${API_PORT}"
 
 echo "==> Building the website ($(date '+%Y-%m-%d %H:%M'))"
 # The build reads live content from the API, so the API must be running.
-curl -fsS http://127.0.0.1:4000/api/health >/dev/null || { echo "API is not running; skipped."; exit 1; }
+curl -fsS http://127.0.0.1:${API_PORT}/api/health >/dev/null || { echo "API is not running; skipped."; exit 1; }
 npm run build -w client
 
 echo "==> Publishing"

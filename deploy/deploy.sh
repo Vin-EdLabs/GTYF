@@ -12,6 +12,9 @@ APP_DIR="$(pwd)"
 FIRST_TIME=false
 [[ "${1:-}" == "--first-time" ]] && FIRST_TIME=true
 
+# The API port comes from .env (default 4000), so this can share a server with other apps.
+API_PORT="$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '"[:space:]')"; API_PORT="${API_PORT:-4000}"
+
 step() { echo; echo "==> $*"; }
 
 if [[ -d .git ]]; then
@@ -40,7 +43,7 @@ pm2 save
 
 step "Waiting for the API to be healthy"
 for i in $(seq 1 30); do
-  if curl -fsS http://127.0.0.1:4000/api/health >/dev/null; then echo "API is up."; break; fi
+  if curl -fsS http://127.0.0.1:${API_PORT}/api/health >/dev/null; then echo "API is up."; break; fi
   sleep 1
   if [[ $i == 30 ]]; then echo "API did not start. See: pm2 logs gtyf-api"; exit 1; fi
 done
